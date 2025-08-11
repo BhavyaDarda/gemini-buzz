@@ -26,11 +26,25 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
+				},
+				viral: {
+					DEFAULT: 'hsl(var(--viral))',
+					foreground: 'hsl(var(--viral-foreground))',
+					glow: 'hsl(var(--viral-glow))'
+				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
@@ -68,6 +82,17 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-viral': 'var(--gradient-viral)',
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-card': 'var(--gradient-card)'
+			},
+			boxShadow: {
+				'primary': 'var(--shadow-primary)',
+				'viral': 'var(--shadow-viral)',
+				'glow': 'var(--shadow-glow)'
+			},
 			keyframes: {
 				'accordion-down': {
 					from: {
@@ -84,11 +109,29 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-glow': {
+					'0%, 100%': { 
+						boxShadow: '0 0 20px hsl(var(--primary) / 0.3)' 
+					},
+					'50%': { 
+						boxShadow: '0 0 40px hsl(var(--primary) / 0.6)' 
+					}
+				},
+				'viral-bounce': {
+					'0%, 100%': { 
+						transform: 'scale(1)' 
+					},
+					'50%': { 
+						transform: 'scale(1.05)' 
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+				'viral-bounce': 'viral-bounce 2s ease-in-out infinite'
 			}
 		}
 	},

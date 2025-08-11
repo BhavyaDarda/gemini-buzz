@@ -2,9 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Reddit AI Generator Design System - Modern SaaS with viral content focus */
 
 @layer base {
   :root {
@@ -17,9 +15,12 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Reddit-inspired purple with modern twist */
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 262 83% 70%;
 
+    /* Warm secondary for viral content */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
@@ -29,12 +30,44 @@ All colors MUST be HSL.
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
+    /* Viral orange accents */
+    --viral: 25 95% 53%;
+    --viral-foreground: 0 0% 100%;
+    --viral-glow: 25 95% 65%;
+
+    /* Success green for high performance */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning amber for moderate performance */
+    --warning: 43 96% 56%;
+    --warning-foreground: 0 0% 100%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 262 83% 58%;
+
+    /* Beautiful gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-viral: linear-gradient(135deg, hsl(var(--viral)), hsl(var(--viral-glow)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--viral)) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.05));
+    
+    /* Glassmorphism effects */
+    --glass-border: hsl(0 0% 100% / 0.2);
+    --glass-bg: hsl(0 0% 100% / 0.1);
+    
+    /* Shadows with color */
+    --shadow-primary: 0 10px 40px -10px hsl(var(--primary) / 0.3);
+    --shadow-viral: 0 10px 40px -10px hsl(var(--viral) / 0.3);
+    --shadow-glow: 0 0 50px hsl(var(--primary-glow) / 0.4);
+    
+    /* Smooth animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
