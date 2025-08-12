@@ -35,19 +35,55 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
 
     setIsGenerating(true);
     
-    // Simulate AI generation (replace with actual Gemini API call)
-    setTimeout(() => {
-      setGeneratedPost({
-        title: `🚀 ${topic}: The Ultimate Guide That Changed Everything`,
-        content: `I never thought ${topic} could be this game-changing until I discovered this approach...\n\nHere's what I learned:\n\n1. The foundation that everyone gets wrong\n2. Why traditional methods fail\n3. The breakthrough that changes everything\n\nThe results speak for themselves:\n- 400% improvement in just 30 days\n- Completely automated workflow\n- Zero additional costs\n\nWho else has experienced similar results?`,
-        viralScore: 8.7,
-        estimatedViews: "15k-25k",
-        engagement: "High",
-        tags: ["trending", "popular", "engaging"],
-        mediaRec: contentType === "image" ? "Infographic showing before/after results" : null
+    try {
+      const payload = {
+        topic,
+        tone,
+        content_type: contentType,
+        subreddit_hint: subreddit,
+        media_choice: contentType
+      };
+
+      const response = await fetch(`https://snwoerqlngclcfdokhwo.supabase.co/functions/v1/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNud29lcnFsbmdjbGNmZG9raHdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MDgxNDksImV4cCI6MjA3MDQ4NDE0OX0.-h4AZ7OutFEc5UUIgHBnFDCyUJa2C-32YhIInX3CvFQ`
+        },
+        body: JSON.stringify(payload)
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate post');
+      }
+
+      const result = await response.json();
+      
+      setGeneratedPost({
+        title: result.title,
+        content: result.content,
+        viralScore: result.viralityScore,
+        estimatedViews: result.estimatedViews,
+        engagement: result.engagement,
+        tags: result.tags || ["ai-generated"],
+        mediaRec: result.mediaRecommendation,
+        id: result.id
+      });
+
+      toast({
+        title: "Post Generated!",
+        description: `Virality score: ${result.viralityScore}/10`
+      });
+    } catch (error) {
+      console.error('Generation error:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Please try again or check your connection",
+        variant: "destructive"
+      });
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const copyToClipboard = (text: string) => {
