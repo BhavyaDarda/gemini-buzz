@@ -1,7 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BarChart3, TrendingUp, Users, Eye, Heart, MessageCircle } from "lucide-react";
+import { BarChart3, TrendingUp, Users, Eye, Heart, MessageCircle, Loader2 } from "lucide-react";
+import { api } from "@/api/client";
 
 const mockMetrics = [
   { label: "Engagement Rate", value: 87, color: "bg-success", icon: Heart },
@@ -10,31 +12,20 @@ const mockMetrics = [
   { label: "Share Rate", value: 29, color: "bg-warning", icon: TrendingUp }
 ];
 
-const topPerformers = [
-  { 
-    title: "10 Life-Changing Productivity Hacks",
-    subreddit: "r/productivity",
-    score: 9.2,
-    views: "45.2K",
-    engagement: "18.5%"
-  },
-  {
-    title: "Why Everyone is Wrong About Crypto",
-    subreddit: "r/cryptocurrency", 
-    score: 8.9,
-    views: "38.7K",
-    engagement: "16.2%"
-  },
-  {
-    title: "I Built an AI That Made Me $10K",
-    subreddit: "r/entrepreneur",
-    score: 8.7,
-    views: "32.1K", 
-    engagement: "15.8%"
-  }
-];
-
 export const AnalyticsWidget = () => {
+  const { data: historyData, isLoading: historyLoading } = useQuery({
+    queryKey: ["analytics-history"],
+    queryFn: api.history,
+  });
+
+  const { data: analyticsData, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["analytics-overall"],
+    queryFn: () => api.analytics({ topic: "overall" }),
+  });
+
+  const isLoading = historyLoading || analyticsLoading;
+  const topPerformers = historyData?.posts?.slice(0, 3) || [];
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Performance Metrics */}
@@ -49,18 +40,24 @@ export const AnalyticsWidget = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {mockMetrics.map((metric, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <metric.icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{metric.label}</span>
-                </div>
-                <span className="text-sm font-semibold">{metric.value}%</span>
-              </div>
-              <Progress value={metric.value} className="h-2" />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ))}
+          ) : (
+            mockMetrics.map((metric, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <metric.icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{metric.label}</span>
+                  </div>
+                  <span className="text-sm font-semibold">{metric.value}%</span>
+                </div>
+                <Progress value={metric.value} className="h-2" />
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
@@ -76,31 +73,41 @@ export const AnalyticsWidget = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {topPerformers.map((post, index) => (
-            <div key={index} className="p-3 rounded-lg bg-muted/30 border border-border/50">
-              <div className="flex items-start justify-between mb-2">
-                <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
-                  {post.title}
-                </h4>
-                <Badge variant="outline" className="text-xs bg-viral/10 text-viral shrink-0">
-                  {post.score}/10
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="font-medium text-primary">{post.subreddit}</span>
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-1">
-                    <Users className="h-3 w-3" />
-                    <span>{post.views}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Heart className="h-3 w-3" />
-                    <span>{post.engagement}</span>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : topPerformers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No posts available</p>
+            </div>
+          ) : (
+            topPerformers.map((post: any, index: number) => (
+              <div key={post.id || index} className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                <div className="flex items-start justify-between mb-2">
+                  <h4 className="text-sm font-medium line-clamp-2 flex-1 mr-2">
+                    {post.title}
+                  </h4>
+                  <Badge variant="outline" className="text-xs bg-viral/10 text-viral shrink-0">
+                    {post.virality_score || 0}/10
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="font-medium text-primary">{post.subreddit || 'r/general'}</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-1">
+                      <Users className="h-3 w-3" />
+                      <span>{post.actual_engagement?.toLocaleString() || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Heart className="h-3 w-3" />
+                      <span>{post.performance || 'Good'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
       </Card>
     </div>

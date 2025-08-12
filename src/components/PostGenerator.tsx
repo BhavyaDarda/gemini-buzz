@@ -86,6 +86,51 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
     }
   };
 
+  const handlePostToReddit = async () => {
+    if (!generatedPost) return;
+    
+    try {
+      const payload = {
+        post_id: generatedPost.id,
+        subreddit,
+        auto_post_toggle: false,
+        title: generatedPost.title,
+        content: generatedPost.content
+      };
+
+      const response = await fetch(`https://snwoerqlngclcfdokhwo.supabase.co/functions/v1/post`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNud29lcnFsbmdjbGNmZG9raHdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5MDgxNDksImV4cCI6MjA3MDQ4NDE0OX0.-h4AZ7OutFEc5UUIgHBnFDCyUJa2C-32YhIInX3CvFQ`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      
+      if (result.manual_option) {
+        window.open(result.manual_option.subreddit_url, '_blank');
+        toast({
+          title: "Ready to Post!",
+          description: "Reddit opened in new tab with your content ready to post"
+        });
+      } else {
+        toast({
+          title: "Post Response",
+          description: result.message || "Post processed successfully"
+        });
+      }
+    } catch (error) {
+      console.error('Post error:', error);
+      toast({
+        title: "Post Failed",
+        description: "Please try again or post manually",
+        variant: "destructive"
+      });
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -242,7 +287,7 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
                     <Copy className="h-4 w-4 mr-2" />
                     Copy Post
                   </Button>
-                  <Button variant="viral" className="flex-1">
+                  <Button variant="viral" className="flex-1" onClick={handlePostToReddit}>
                     <Send className="h-4 w-4 mr-2" />
                     Post to Reddit
                   </Button>

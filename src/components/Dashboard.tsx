@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,25 +10,28 @@ import { AnalyticsWidget } from "@/components/AnalyticsWidget";
 import { TrendingTopics } from "@/components/TrendingTopics";
 import { RecentPosts } from "@/components/RecentPosts";
 import { TrendingUp, Zap, BarChart3, PlusCircle, Settings, Users, Calendar } from "lucide-react";
+import { api } from "@/api/client";
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const [showGenerator, setShowGenerator] = useState(false);
-  const [stats, setStats] = useState({
-    totalPosts: 0,
-    viralScore: 0,
-    totalViews: 0,
-    engagementRate: 0
+  
+  const { data: historyData } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: api.history,
   });
 
-  // Mock data for demonstration
-  useEffect(() => {
-    setStats({
-      totalPosts: 127,
-      viralScore: 8.7,
-      totalViews: 2456789,
-      engagementRate: 12.4
-    });
-  }, []);
+  const { data: analyticsData } = useQuery({
+    queryKey: ["dashboard-analytics"],
+    queryFn: () => api.analytics({ topic: "overall" }),
+  });
+
+  const stats = {
+    totalPosts: historyData?.summary?.total_posts || 0,
+    viralScore: historyData?.summary?.avg_virality_score || 0,
+    totalViews: analyticsData?.engagement_metrics?.total_impressions || 0,
+    engagementRate: parseFloat(analyticsData?.engagement_metrics?.engagement_rate?.replace('%', '') || '0')
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
@@ -49,13 +54,17 @@ export const Dashboard = () => {
             </div>
             
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => navigate('/settings')}
+              >
                 <Settings className="h-5 w-5" />
               </Button>
               <Button 
                 variant="hero" 
                 size="lg"
-                onClick={() => setShowGenerator(!showGenerator)}
+                onClick={() => navigate('/generate')}
               >
                 <PlusCircle className="h-5 w-5" />
                 Generate Post
@@ -120,29 +129,6 @@ export const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Post Generator Modal/Section */}
-        {showGenerator && (
-          <div className="mb-8">
-            <Card className="bg-gradient-card backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Zap className="h-5 w-5 text-viral" />
-                  <span>AI Post Generator</span>
-                  <Badge variant="secondary" className="ml-auto">
-                    Powered by Gemini Pro
-                  </Badge>
-                </CardTitle>
-                <CardDescription>
-                  Generate viral Reddit posts with AI-powered trend analysis
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PostGenerator onClose={() => setShowGenerator(false)} />
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

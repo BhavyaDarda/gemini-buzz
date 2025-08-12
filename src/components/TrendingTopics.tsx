@@ -1,50 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Flame, ArrowUp, Eye, MessageCircle } from "lucide-react";
-
-const trendingTopics = [
-  {
-    topic: "AI Productivity Tools",
-    score: 94,
-    change: +12,
-    category: "Technology",
-    posts: 1247,
-    engagement: "Very High"
-  },
-  {
-    topic: "Remote Work Tips",
-    score: 89,
-    change: +8,
-    category: "Lifestyle", 
-    posts: 892,
-    engagement: "High"
-  },
-  {
-    topic: "Crypto Market Analysis",
-    score: 85,
-    change: -3,
-    category: "Finance",
-    posts: 1563,
-    engagement: "High"
-  },
-  {
-    topic: "Mental Health Awareness",
-    score: 82,
-    change: +15,
-    category: "Health",
-    posts: 734,
-    engagement: "Medium"
-  },
-  {
-    topic: "Startup Success Stories", 
-    score: 78,
-    change: +5,
-    category: "Business",
-    posts: 456,
-    engagement: "Medium"
-  }
-];
+import { TrendingUp, Flame, ArrowUp, Eye, MessageCircle, Loader2 } from "lucide-react";
+import { api } from "@/api/client";
 
 const hotSubreddits = [
   { name: "r/productivity", activity: 98, trending: true },
@@ -55,6 +14,14 @@ const hotSubreddits = [
 ];
 
 export const TrendingTopics = () => {
+  const { data: trendsData, isLoading, error } = useQuery({
+    queryKey: ["trends"],
+    queryFn: () => api.trends({ window: "24h", limit: 10 }),
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+  });
+
+  const trends = trendsData?.trends || [];
+
   return (
     <div className="space-y-6">
       {/* Trending Topics */}
@@ -69,40 +36,56 @@ export const TrendingTopics = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {trendingTopics.map((topic, index) => (
-            <div key={index} className="p-3 rounded-lg bg-muted/20 border border-border/30 hover:bg-muted/40 transition-all duration-200">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-sm">{topic.topic}</h4>
-                <div className="flex items-center space-x-2">
-                  <Badge 
-                    variant={topic.change > 0 ? "default" : "outline"}
-                    className={`text-xs ${topic.change > 0 ? 'bg-success/10 text-success' : 'text-muted-foreground'}`}
-                  >
-                    <ArrowUp className={`h-3 w-3 mr-1 ${topic.change < 0 ? 'rotate-180' : ''}`} />
-                    {Math.abs(topic.change)}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs bg-viral/10 text-viral">
-                    {topic.score}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="bg-primary/10 text-primary px-2 py-1 rounded">{topic.category}</span>
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-1">
-                    <Eye className="h-3 w-3" />
-                    <span>{topic.posts}</span>
-                  </div>
-                  <span className={`font-medium ${
-                    topic.engagement === 'Very High' ? 'text-success' :
-                    topic.engagement === 'High' ? 'text-viral' : 'text-warning'
-                  }`}>
-                    {topic.engagement}
-                  </span>
-                </div>
-              </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
-          ))}
+          ) : error ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Failed to load trends</p>
+            </div>
+          ) : trends.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No trending topics available</p>
+            </div>
+          ) : (
+            trends.map((trend: any, index: number) => (
+              <div key={trend.id || index} className="p-3 rounded-lg bg-muted/20 border border-border/30 hover:bg-muted/40 transition-all duration-200">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-sm">{trend.topic}</h4>
+                  <div className="flex items-center space-x-2">
+                    {trend.growth_rate && (
+                      <Badge 
+                        variant={trend.growth_rate.startsWith('+') ? "default" : "outline"}
+                        className={`text-xs ${trend.growth_rate.startsWith('+') ? 'bg-success/10 text-success' : 'text-muted-foreground'}`}
+                      >
+                        <ArrowUp className={`h-3 w-3 mr-1 ${trend.growth_rate.startsWith('-') ? 'rotate-180' : ''}`} />
+                        {trend.growth_rate}
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-xs bg-viral/10 text-viral">
+                      {Math.round(trend.score * 10) / 10}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="bg-primary/10 text-primary px-2 py-1 rounded">Trending</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-1">
+                      <Eye className="h-3 w-3" />
+                      <span>{trend.impressions?.toLocaleString() || 'N/A'}</span>
+                    </div>
+                    <span className={`font-medium ${
+                      trend.engagement === 'Very High' ? 'text-success' :
+                      trend.engagement === 'High' ? 'text-viral' : 'text-warning'
+                    }`}>
+                      {trend.engagement || 'Medium'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
