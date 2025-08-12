@@ -17,13 +17,22 @@ export const api = {
     return data as any;
   },
   uploadMedia: async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const { data, error } = await supabase.functions.invoke("upload-media", {
-      body: {}, // Edge Function should parse the form (to be implemented)
-    });
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('media')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
     if (error) throw error;
-    return data as any;
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('media')
+      .getPublicUrl(fileName);
+    
+    return { url: urlData.publicUrl, path: fileName };
   },
   post: async (payload: { post_id: string; subreddit: string; auto_post_toggle: boolean; consent?: boolean }) => {
     const { data, error } = await supabase.functions.invoke("post", { body: payload });
