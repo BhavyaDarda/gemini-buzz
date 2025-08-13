@@ -10,6 +10,10 @@ import { Separator } from "@/components/ui/separator";
 import { Sparkles, Target, Image, BarChart3, Copy, Send, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { api } from "@/api/client";
+import { NichePicker } from "@/components/NichePicker";
+import { ViralitySpectrum } from "@/components/ViralitySpectrum";
+import { MediaUploader } from "@/components/MediaUploader";
+import { ConsentToggle } from "@/components/ConsentToggle";
 
 interface PostGeneratorProps {
   onClose: () => void;
@@ -20,6 +24,10 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
   const [subreddit, setSubreddit] = useState("");
   const [tone, setTone] = useState("");
   const [contentType, setContentType] = useState("text");
+  const [niches, setNiches] = useState<string[]>([]);
+  const [virality, setVirality] = useState<number[]>([70]);
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [autoPost, setAutoPost] = useState(false);
   const [generatedPost, setGeneratedPost] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -35,7 +43,6 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
     }
 
     setIsGenerating(true);
-    
     try {
       const payload = {
         topic,
@@ -43,7 +50,9 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
         content_type: contentType,
         subreddit_hint: subreddit,
         media_choice: contentType,
-        model: "gemini-2.0-flash"
+        model: "gemini-2.5-flash",
+        niches,
+        target_virality: virality[0]
       } as any;
 
       const result = await api.generate(payload);
@@ -56,20 +65,14 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
         engagement: result.engagement,
         tags: result.tags || ["ai-generated"],
         mediaRec: result.mediaRecommendation,
-        id: result.id
+        id: result.id,
+        mediaUrls
       });
 
-      toast({
-        title: "Post Generated!",
-        description: `Virality score: ${result.viralityScore}/10`
-      });
+      toast({ title: "Post Generated!", description: `Virality score: ${result.viralityScore}/10` });
     } catch (error) {
       console.error('Generation error:', error);
-      toast({
-        title: "Generation Failed",
-        description: "Please try again or check your connection",
-        variant: "destructive"
-      });
+      toast({ title: "Generation Failed", description: "Please try again or check your connection", variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
@@ -77,37 +80,40 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
 
   const handlePostToReddit = async () => {
     if (!generatedPost) return;
-    
     try {
+      const getSessionId = () => {
+        const key = 'reddit_session_id';
+        let id = localStorage.getItem(key);
+        if (!id) { id = crypto.randomUUID(); localStorage.setItem(key, id); }
+        return id;
+      };
+
       const payload = {
         post_id: generatedPost.id,
         subreddit,
-        auto_post_toggle: false,
+        auto_post_toggle: autoPost,
+        consent: autoPost,
         title: generatedPost.title,
-        content: generatedPost.content
+        content: generatedPost.content,
+        session_id: autoPost ? getSessionId() : undefined,
       };
 
-      const result = await api.post(payload);
-      
-      if (result.manual_option) {
+      const result = await api.post(payload as any);
+
+      if (result.type === 'posted') {
+        toast({ title: "Posted!", description: "Your post was submitted to Reddit" });
+      } else if (result.oauth_url) {
+        window.open(result.oauth_url, '_blank');
+        toast({ title: "Connect Reddit", description: "Authorize Reddit, then try auto-post again." });
+      } else if (result.manual_option) {
         window.open(result.manual_option.subreddit_url, '_blank');
-        toast({
-          title: "Ready to Post!",
-          description: "Reddit opened in new tab with your content ready to post"
-        });
+        toast({ title: "Ready to Post!", description: "Reddit opened in new tab with your content ready to post" });
       } else {
-        toast({
-          title: "Post Response",
-          description: result.message || "Post processed successfully"
-        });
+        toast({ title: "Post Response", description: result.message || "Post processed" });
       }
     } catch (error) {
       console.error('Post error:', error);
-      toast({
-        title: "Post Failed",
-        description: "Please try again or post manually",
-        variant: "destructive"
-      });
+      toast({ title: "Post Failed", description: "Please try again or post manually", variant: "destructive" });
     }
   };
 
@@ -191,6 +197,31 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Niches</label>
+              <NichePicker suggestions={["AI", "Fitness", "Crypto", "Productivity"]} onChange={setNiches} />
+            </div>
+            <div className="space-y-2">
+              <ViralitySpectrum value={virality} onChange={setVirality} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Attach Media (optional)</label>
+            <MediaUploader onFilesSelected={async (files) => {
+              try {
+                const uploads = await Promise.all(files.map((f) => api.uploadMedia(f)));
+                setMediaUrls(uploads.map((u) => u.url));
+                toast({ title: "Uploaded", description: `${uploads.length} file(s) uploaded` });
+              } catch (e) {
+                toast({ title: "Upload failed", description: "Please try again", variant: "destructive" });
+              }
+            }} />
+          </div>
+
+          <ConsentToggle checked={autoPost} onChange={setAutoPost} />
+
           <Button 
             variant="hero" 
             size="lg" 
@@ -255,6 +286,15 @@ export const PostGenerator = ({ onClose }: PostGeneratorProps) => {
                     </p>
                   </div>
                 )}
+
+                {generatedPost.mediaUrls?.length ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {generatedPost.mediaUrls.map((src: string) => (
+                      <img key={src} src={src} alt="Uploaded media" className="rounded-md border border-border object-cover aspect-video" />
+                    ))}
+                  </div>
+                ) : null}
+
 
                 <Separator />
 

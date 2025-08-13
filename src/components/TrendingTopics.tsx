@@ -2,8 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Flame, ArrowUp, Eye, MessageCircle, Loader2 } from "lucide-react";
+import { TrendingUp, Flame, ArrowUp, Eye, MessageCircle, Loader2, RadioSignal } from "lucide-react";
 import { api } from "@/api/client";
+import { useTrendsStream } from "@/hooks/useTrendsStream";
+
 
 const hotSubreddits = [
   { name: "r/productivity", activity: 98, trending: true },
@@ -17,10 +19,11 @@ export const TrendingTopics = () => {
   const { data: trendsData, isLoading, error } = useQuery({
     queryKey: ["trends"],
     queryFn: () => api.trends({ window: "24h", limit: 10 }),
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    refetchInterval: 5 * 60 * 1000,
   });
+  const { latestTrends } = useTrendsStream();
 
-  const trends = trendsData?.trends || [];
+  const trends = [...(latestTrends || []), ...(trendsData?.trends || [])].slice(0, 10);
 
   return (
     <div className="space-y-6">
@@ -30,6 +33,7 @@ export const TrendingTopics = () => {
           <CardTitle className="flex items-center space-x-2">
             <Flame className="h-5 w-5 text-viral" />
             <span>Trending Topics</span>
+            <Badge variant="outline" className="ml-2 text-xs flex items-center gap-1"><RadioSignal className="h-3 w-3"/> Live</Badge>
           </CardTitle>
           <CardDescription>
             Hot topics with viral potential right now

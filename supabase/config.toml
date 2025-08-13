@@ -58,3 +58,9 @@ verify_jwt = false
 
 [functions.history]
 verify_jwt = false
+
+[functions.reddit-auth]
+verify_jwt = false
+
+[functions.trends-stream]
+verify_jwt = false

@@ -21,6 +21,7 @@ export const AnalyticsWidget = () => {
   const { data: analyticsData, isLoading: analyticsLoading } = useQuery({
     queryKey: ["analytics-overall"],
     queryFn: () => api.analytics({ topic: "overall" }),
+    refetchInterval: 60 * 1000,
   });
 
   const isLoading = historyLoading || analyticsLoading;

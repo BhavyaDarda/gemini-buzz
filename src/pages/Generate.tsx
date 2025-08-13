@@ -25,7 +25,7 @@ const Generate = () => {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Generate Viral Reddit Post</h1>
         <p className="text-muted-foreground mt-1">
-          Craft optimized posts, preview output, and get AI-suggested media.
+          Craft optimized posts, preview output, attach media, and opt-in to auto-post.
         </p>
       </header>
 

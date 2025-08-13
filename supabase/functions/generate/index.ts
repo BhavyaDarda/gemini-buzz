@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, tone, content_type, subreddit_hint, media_choice, model } = await req.json()
+    const { topic, tone, content_type, subreddit_hint, media_choice, model, target_virality, niches } = await req.json()
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
     const ASTRA_DB_API_ENDPOINT = Deno.env.get('ASTRA_DB_API_ENDPOINT')
     const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get('ASTRA_DB_APPLICATION_TOKEN')
@@ -21,24 +21,31 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY not configured')
     }
 
-    // Generate post with Gemini (prefers latest Flash/Pro with automatic fallback)
+    // Generate post with Gemini (prefers latest 2.5 Flash/Pro with automatic fallback)
     const geminiPrompt = `Create a viral Reddit post about "${topic}".
     
 Instructions:
 - Target subreddit: ${subreddit_hint || 'general'}
 - Tone: ${tone || 'engaging'}
 - Content type: ${content_type || 'text'}
-- Make it compelling, authentic, and likely to get high engagement
-- Include a catchy title and detailed body
-- Add strategic hooks and emotional triggers
-- Format: Title on first line, then body content
+- If niches are provided, weave them naturally into the content
+- Aim for a virality score target of ${typeof target_virality === 'number' ? target_virality : 70}/100 based on Reddit best practices
+- Include a catchy title (first line) and detailed body
+- Use strategic hooks and emotional triggers without clickbait
+- Keep formatting Reddit-friendly (no markdown tables)
 
-Generate ONLY the post content, no explanations.`
+Format:
+1) First line is the Title
+2) Then the full Body content
+
+ONLY output the title and body, no extra commentary.`
 
     const preferred = typeof model === 'string' && model.trim().length > 0 ? model.trim() : null
     const modelCandidates = preferred
       ? [preferred]
       : [
+          'gemini-2.5-flash',
+          'gemini-2.5-pro',
           'gemini-2.0-flash',
           'gemini-2.0-pro',
           'gemini-1.5-flash',

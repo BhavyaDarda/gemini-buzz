@@ -31,7 +31,7 @@ export const TrendChart = () => {
               backgroundColor: 'hsl(var(--card))',
               border: '1px solid hsl(var(--border))',
               borderRadius: '8px',
-              boxShadow: 'var(--shadow-primary)'
+              boxShadow: 'var(--shadow-elegant)'
             }}
           />
           <Line 

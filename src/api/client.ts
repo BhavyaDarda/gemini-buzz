@@ -6,6 +6,9 @@ export type GeneratePayload = {
   content_type?: string;
   subreddit_hint?: string;
   media_choice?: string;
+  model?: string;
+  niches?: string[];
+  target_virality?: number;
 };
 
 export const api = {
@@ -34,7 +37,7 @@ export const api = {
     
     return { url: urlData.publicUrl, path: fileName };
   },
-  post: async (payload: { post_id: string; subreddit: string; auto_post_toggle: boolean; consent?: boolean; title?: string; content?: string }) => {
+  post: async (payload: { post_id: string; subreddit: string; auto_post_toggle: boolean; consent?: boolean; title?: string; content?: string; session_id?: string }) => {
     const { data, error } = await supabase.functions.invoke("post", { body: payload });
     if (error) throw error;
     return data as any;
@@ -54,4 +57,13 @@ export const api = {
     if (error) throw error;
     return data as any;
   },
-};
+  redditAuthStart: async (session_id: string) => {
+    const { data, error } = await supabase.functions.invoke("reddit-auth", { body: { action: 'start', session_id } });
+    if (error) throw error;
+    return data as any;
+  },
+  redditAuthStatus: async (session_id: string) => {
+    const { data, error } = await supabase.functions.invoke("reddit-auth", { body: { action: 'status', session_id } });
+    if (error) throw error;
+    return data as any;
+  },
