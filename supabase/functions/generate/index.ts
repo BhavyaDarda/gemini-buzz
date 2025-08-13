@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, tone, content_type, subreddit_hint, media_choice } = await req.json()
+    const { topic, tone, content_type, subreddit_hint, media_choice, model } = await req.json()
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
     const ASTRA_DB_API_ENDPOINT = Deno.env.get('ASTRA_DB_API_ENDPOINT')
     const ASTRA_DB_APPLICATION_TOKEN = Deno.env.get('ASTRA_DB_APPLICATION_TOKEN')
@@ -21,7 +21,7 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY not configured')
     }
 
-    // Generate post with Gemini Pro
+    // Generate post with Gemini (prefers latest Flash/Pro with automatic fallback)
     const geminiPrompt = `Create a viral Reddit post about "${topic}".
     
 Instructions:
@@ -35,25 +35,58 @@ Instructions:
 
 Generate ONLY the post content, no explanations.`
 
-    console.log('Calling Gemini API with prompt:', geminiPrompt.substring(0, 100) + '...')
+    const preferred = typeof model === 'string' && model.trim().length > 0 ? model.trim() : null
+    const modelCandidates = preferred
+      ? [preferred]
+      : [
+          'gemini-2.0-flash',
+          'gemini-2.0-pro',
+          'gemini-1.5-flash',
+          'gemini-1.5-pro',
+          'gemini-pro'
+        ]
 
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: geminiPrompt }]
-        }]
-      })
-    })
+    console.log('Attempting Gemini models in order:', modelCandidates.join(', '))
 
-    if (!geminiResponse.ok) {
-      console.error('Gemini API error:', await geminiResponse.text())
-      throw new Error(`Gemini API failed: ${geminiResponse.status}`)
+    let generatedText = ''
+    let lastErr: any = null
+
+    for (const m of modelCandidates) {
+      try {
+        console.log('Calling Gemini API with model:', m, 'prompt:', geminiPrompt.substring(0, 100) + '...')
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: geminiPrompt }] }]
+          })
+        })
+
+        if (!resp.ok) {
+          const errText = await resp.text()
+          console.error(`Gemini API error (${m}):`, errText)
+          lastErr = new Error(`Gemini API failed (${m}): ${resp.status}`)
+          continue
+        }
+
+        const data = await resp.json()
+        generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+        if (generatedText) {
+          console.log('Successfully generated content with model:', m)
+          break
+        } else {
+          lastErr = new Error(`Empty response from model ${m}`)
+        }
+      } catch (e) {
+        console.error(`Gemini request threw for model ${m}:`, e)
+        lastErr = e
+      }
     }
 
-    const geminiData = await geminiResponse.json()
-    const generatedText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Failed to generate content'
+    if (!generatedText) {
+      throw lastErr || new Error('Failed to generate content from Gemini')
+    }
 
     // Parse title and content
     const lines = generatedText.split('\n')

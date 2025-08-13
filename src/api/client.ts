@@ -34,7 +34,7 @@ export const api = {
     
     return { url: urlData.publicUrl, path: fileName };
   },
-  post: async (payload: { post_id: string; subreddit: string; auto_post_toggle: boolean; consent?: boolean }) => {
+  post: async (payload: { post_id: string; subreddit: string; auto_post_toggle: boolean; consent?: boolean; title?: string; content?: string }) => {
     const { data, error } = await supabase.functions.invoke("post", { body: payload });
     if (error) throw error;
     return data as any;
