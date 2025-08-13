@@ -67,3 +67,4 @@ export const api = {
     if (error) throw error;
     return data as any;
   },
+};
