@@ -9,6 +9,9 @@ import { PostGenerator } from "@/components/PostGenerator";
 import { AnalyticsWidget } from "@/components/AnalyticsWidget";
 import { TrendingTopics } from "@/components/TrendingTopics";
 import { RecentPosts } from "@/components/RecentPosts";
+import { ROIAnalytics } from "@/components/ROIAnalytics";
+import { AdvancedTrendAnalysis } from "@/components/AdvancedTrendAnalysis";
+import { RealTimeEngagement } from "@/components/RealTimeEngagement";
 import { TrendingUp, Zap, BarChart3, PlusCircle, Settings, Users, Calendar } from "lucide-react";
 import { api } from "@/api/client";
 
@@ -131,9 +134,13 @@ export const Dashboard = () => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Charts & Analytics */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-8">
+          {/* Top Row - Real-time Engagement */}
+          <RealTimeEngagement />
+          
+          {/* Second Row - Advanced Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <ROIAnalytics />
             <Card className="bg-gradient-card backdrop-blur-sm border-white/20">
               <CardHeader>
                 <CardTitle>Viral Performance Trends</CardTitle>
@@ -145,14 +152,20 @@ export const Dashboard = () => {
                 <TrendChart />
               </CardContent>
             </Card>
-
-            <AnalyticsWidget />
           </div>
-
-          {/* Right Column - Trending & Recent */}
-          <div className="space-y-6">
-            <TrendingTopics />
-            <RecentPosts />
+          
+          {/* Third Row - Trend Analysis */}
+          <AdvancedTrendAnalysis />
+          
+          {/* Fourth Row - Traditional Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <AnalyticsWidget />
+            </div>
+            <div className="space-y-6">
+              <TrendingTopics />
+              <RecentPosts />
+            </div>
           </div>
         </div>
       </div>

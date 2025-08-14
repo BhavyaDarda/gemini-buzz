@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SEO from "@/components/SEO";
 import { PostGenerator } from "@/components/PostGenerator";
+import { ContentOptimizer } from "@/components/ContentOptimizer";
+import { AdvancedTrendAnalysis } from "@/components/AdvancedTrendAnalysis";
 
 const Generate = () => {
   const navigate = useNavigate();
@@ -29,9 +32,27 @@ const Generate = () => {
         </p>
       </header>
 
-      <Card className="p-4 bg-card/60 backdrop-blur">
-        <PostGenerator onClose={() => navigate("/")} />
-      </Card>
+      <Tabs defaultValue="generate" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="generate">Generate Post</TabsTrigger>
+          <TabsTrigger value="optimize">Content Optimizer</TabsTrigger>
+          <TabsTrigger value="insights">Market Insights</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="generate" className="mt-6">
+          <Card className="p-4 bg-card/60 backdrop-blur">
+            <PostGenerator onClose={() => navigate("/")} />
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="optimize" className="mt-6">
+          <ContentOptimizer />
+        </TabsContent>
+        
+        <TabsContent value="insights" className="mt-6">
+          <AdvancedTrendAnalysis />
+        </TabsContent>
+      </Tabs>
     </main>
   );
 };

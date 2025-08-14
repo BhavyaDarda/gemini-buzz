@@ -5,6 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TrendChart } from "@/components/TrendChart";
+import { AnalyticsWidget } from "@/components/AnalyticsWidget";
+import { ROIAnalytics } from "@/components/ROIAnalytics";
+import { AdvancedTrendAnalysis } from "@/components/AdvancedTrendAnalysis";
+import { RealTimeEngagement } from "@/components/RealTimeEngagement";
 import { api } from "@/api/client";
 import { Loader2, Search, Calendar, BarChart3, TrendingUp, Users, MessageCircle, Eye } from "lucide-react";
 
@@ -84,152 +90,141 @@ const Analytics = () => {
         </CardContent>
       </Card>
 
-      {/* ROI Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total ROI</CardTitle>
-            <TrendingUp className="h-4 w-4 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {data.roi_metrics?.roi_percentage || "+1250%"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Cost: ${data.roi_metrics?.cost_per_post || "0.02"} per post
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {data.engagement_metrics?.total_posts || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Avg Score: {data.engagement_metrics?.avg_virality_score || "0"}/10
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {data.engagement_metrics?.total_impressions?.toLocaleString() || "0"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Engagement Rate: {data.engagement_metrics?.engagement_rate || "0%"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {data.engagement_metrics?.growth_rate || "+23.5%"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Last 30 days
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Performance Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Subreddit Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Performance by Subreddit</CardTitle>
-            <CardDescription>
-              Which communities perform best for your content
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {(data.subreddit_performance || []).map((sub: any, index: number) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div>
-                    <p className="font-medium">{sub.subreddit}</p>
-                    <p className="text-sm text-muted-foreground">{sub.posts} posts</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-viral">{sub.avg_score}/10</p>
-                    <p className="text-sm text-muted-foreground">{sub.total_engagement} engagement</p>
-                  </div>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="realtime">Real-Time</TabsTrigger>
+          <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="roi">ROI Analysis</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="mt-6 space-y-6">
+          {/* ROI Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total ROI</CardTitle>
+                <TrendingUp className="h-4 w-4 text-success" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-success">
+                  {data.roi_metrics?.roi_percentage || "+1250%"}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <p className="text-xs text-muted-foreground">
+                  Cost: ${data.roi_metrics?.cost_per_post || "0.02"} per post
+                </p>
+              </CardContent>
+            </Card>
 
-        {/* Content Type Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Performance by Content Type</CardTitle>
-            <CardDescription>
-              Which formats drive the most engagement
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {(data.content_type_performance || []).map((type: any, index: number) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div>
-                    <p className="font-medium capitalize">{type.type}</p>
-                    <p className="text-sm text-muted-foreground">{type.posts} posts</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-viral">{type.avg_score}/10</p>
-                    <p className="text-sm text-muted-foreground">{type.engagement_rate} rate</p>
-                  </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data.engagement_metrics?.total_posts || 0}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                <p className="text-xs text-muted-foreground">
+                  Avg Score: {data.engagement_metrics?.avg_virality_score || "0"}/10
+                </p>
+              </CardContent>
+            </Card>
 
-      {/* Best Performing Post */}
-      {data.engagement_metrics?.best_performing_post && (
-        <Card>
-          <CardHeader>
-            <CardTitle>🏆 Best Performing Post</CardTitle>
-            <CardDescription>
-              Your highest scoring content
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="p-4 rounded-lg bg-gradient-to-r from-viral/10 to-success/10 border border-viral/20">
-              <h3 className="font-semibold mb-2">
-                {data.engagement_metrics.best_performing_post.title}
-              </h3>
-              <div className="flex items-center space-x-4 text-sm">
-                <Badge variant="outline" className="bg-viral/10 text-viral">
-                  <BarChart3 className="h-3 w-3 mr-1" />
-                  {data.engagement_metrics.best_performing_post.score}/10
-                </Badge>
-                <div className="flex items-center space-x-1">
-                  <MessageCircle className="h-3 w-3" />
-                  <span>{data.engagement_metrics.best_performing_post.engagement} engagement</span>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data.engagement_metrics?.total_impressions?.toLocaleString() || "0"}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Engagement Rate: {data.engagement_metrics?.engagement_rate || "0%"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-success">
+                  {data.engagement_metrics?.growth_rate || "+23.5%"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Last 30 days
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-gradient-card backdrop-blur-sm border-white/20">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Performance Trends</h3>
+                <TrendChart />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </Card>
+            <ROIAnalytics />
+          </div>
+
+          <AnalyticsWidget />
+
+          {/* Best Performing Post */}
+          {data.engagement_metrics?.best_performing_post && (
+            <Card>
+              <CardHeader>
+                <CardTitle>🏆 Best Performing Post</CardTitle>
+                <CardDescription>
+                  Your highest scoring content
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 rounded-lg bg-gradient-to-r from-viral/10 to-success/10 border border-viral/20">
+                  <h3 className="font-semibold mb-2">
+                    {data.engagement_metrics.best_performing_post.title}
+                  </h3>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <Badge variant="outline" className="bg-viral/10 text-viral">
+                      <BarChart3 className="h-3 w-3 mr-1" />
+                      {data.engagement_metrics.best_performing_post.score}/10
+                    </Badge>
+                    <div className="flex items-center space-x-1">
+                      <MessageCircle className="h-3 w-3" />
+                      <span>{data.engagement_metrics.best_performing_post.engagement} engagement</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="realtime" className="mt-6">
+          <RealTimeEngagement />
+        </TabsContent>
+        
+        <TabsContent value="trends" className="mt-6">
+          <AdvancedTrendAnalysis selectedNiches={[selectedTopic].filter(Boolean)} />
+        </TabsContent>
+        
+        <TabsContent value="roi" className="mt-6 space-y-6">
+          <ROIAnalytics />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-gradient-card backdrop-blur-sm border-white/20">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Performance Chart</h3>
+                <TrendChart />
+              </div>
+            </Card>
+            <AnalyticsWidget />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
